@@ -1,13 +1,34 @@
-﻿using OpenTK.Mathematics;
-
-namespace cg_task5;
-
+﻿namespace cg_task5;
 struct Triangle
 {
-    public Triangle(Color4 color, Vector3 v1, Vector3 v2, Vector3 v3) => (Color, V1, V2, V3) = (color, v1, v2, v3);
+    public Point P1 { get; set; }
 
-    public Color4 Color { get; set; }
-    public Vector3 V1 { get; set; }
-    public Vector3 V2 { get; set; }
-    public Vector3 V3 { get; set; }
+    public Point P2 { get; set; }
+
+    public Point P3 { get; set; }
+
+    public Point this[int i]
+    {
+        get
+        {
+            return i switch
+            {
+                0 => P1,
+                1 => P2,
+                2 => P3,
+                _ => throw new IndexOutOfRangeException(),
+            };
+        }
+        set
+        {
+            switch (i)
+            {
+                case 0: P1 = value; break;
+                case 1: P2 = value; break;
+                case 2: P3 = value; break;
+                default: throw new IndexOutOfRangeException();
+            }
+        }
+    }
 }
+

@@ -1,95 +1,68 @@
 ﻿using OpenTK.Mathematics;
 using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace cg_task5;
 
 static class OBJ
 {
-    public static List<Triangle> Load(Stream stream)
+    public static (List<Triangle>, float) Load(Stream stream)
     {
         List<Triangle> triangles = new();
-        List<Vector3> vList = new();
-        Dictionary<String, Color4> dict = new();
-        Color4 cuurentColor = Color4.White;
-        float[] max = { -1f, -1f, -1f };
-        float[] min = { float.MaxValue, float.MaxValue, float.MaxValue };
-        bool normilized = false;
+        List<Vector3> v = new();
+        List<Vector3> vt = new();
+        List<Vector3> vn = new();
+        float max = -1;
 
         using StreamReader reader = new(stream);
         string inp;
         while ((inp = reader.ReadLine()) != null)
         {
-            string[] str = inp.Trim().Split(' ', 2);
+            string[] str = Regex.Replace(inp.Trim(), @"\s+", " ").Split(' ', 2);
             switch (str[0])
             {
                 case "v":
-                    string[] cords = str[1].Split();
-                    Vector3 v = new();
+                    Vector3 vect = ReadVector(str[1]);
                     for (int i = 0; i < 3; i++)
                     {
-                        v[i] = float.Parse(cords[i], CultureInfo.InvariantCulture);
-                        max[i] = Math.Max(max[i], v[i]);
-                        min[i] = Math.Min(min[i], v[i]);
+                        max = Math.Max(max, Math.Abs(vect[i]));
                     }
-                    vList.Add(v);
+                    v.Add(vect);
                     break;
-                case "mtllib":
-                    using (Stream mtlStream = File.OpenRead(str[1]))
-                    {
-                        dict = LoadMTL(mtlStream);
-                    }
+                case "vt":
+                    vt.Add(ReadVector(str[1]));
                     break;
-                case "usemtl":
-                    cuurentColor = dict[str[1]];
+                case "vn":
+                    vn.Add(ReadVector(str[1]));
                     break;
                 case "f":
-                    if (!normilized)
+                    string[] point = str[1].Split();
+                    Triangle triangle = new();
+                    for (int i = 0; i < 3; i++)
                     {
-                        float maxV = Math.Max(Math.Abs(max.Max()), Math.Abs(min.Min()));
-                        float[] m = new float[3];
-                        for (int i = 0; i < 3; i++)
-                        {
-                            m[i] = (min[i] + max[i]) / 2f;
-                        }
-                        for (int i = 0; i < vList.Count; i++)
-                        {
-                            var vert = vList[i];
-                            for (int j = 0; j < 3; j++)
-                            {
-                                vert[j] -= m[j];
-                            }
-                            vert /= maxV;
-                            vList[i] = vert;
-                        }
-                        normilized = true;
+                        int[] ind = point[i].Split('/').Select(x => int.Parse(x) - 1).ToArray();
+                        var p = triangle[i];
+                        p.V = v[ind[0]];
+                        p.VT = vt[ind[1]];
+                        p.VN = vn[ind[2]];
+                        triangle[i] = p;
                     }
-                    int[] ind = str[1].Split().Select(x => int.Parse(x) - 1).ToArray();
-                    triangles.Add(new Triangle(cuurentColor, vList[ind[0]],
-                             vList[ind[1]], vList[ind[2]]));
+                    triangles.Add(triangle);
                     break;
             }
         }
-        return triangles;
+        return (triangles, 1/max);
     }
 
-    private static Dictionary<String, Color4> LoadMTL(Stream stream)
+    private static Vector3 ReadVector(string str)
     {
-        Dictionary<String, Color4> dict = new();
-        using StreamReader reader = new(stream);
-        string inp;
-        while ((inp = reader.ReadLine()) != null)
+        string[] cords = str.Split();
+        Vector3 v = new();
+        for (int i = 0; i < 3; i++)
         {
-            string[] str = inp.Trim().Split(' ', 2);
-            if (str[0] == "newmtl")
-            {
-                float[] color = reader.ReadLine().Trim()[4..]
-                    .Split()
-                    .Select(x => float.Parse(x, CultureInfo.InvariantCulture))
-                    .ToArray();
-                dict.Add(str[1], new Color4(color[0], color[1], color[2], 1f));
-            }
+            v[i] = float.Parse(cords[i], CultureInfo.InvariantCulture);
         }
-        return dict;
+        return v;
     }
 }
 

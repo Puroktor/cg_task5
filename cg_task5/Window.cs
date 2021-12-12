@@ -4,11 +4,16 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
+
 namespace cg_task5;
 
 class Window : GameWindow
 {
     private List<Triangle> model;
+    private int texture;
     private double frameTime = 0;
     private int fps = 0;
 
@@ -21,10 +26,44 @@ class Window : GameWindow
     protected override void OnLoad()
     {
         base.OnLoad();
-        using Stream stream = File.OpenRead("dart.obj");
-        model = OBJ.Load(stream);
+        using Stream stream = File.OpenRead("woman.obj");
+        float scale;
+        (model, scale) = OBJ.Load(stream);
 
+        GL.Scale(scale, scale, scale);
+        GL.Translate(0, -1 / scale / 2, 0);
         GL.ClearColor(Color4.LightBlue);
+
+        GL.Enable(EnableCap.DepthTest);
+
+        LoadTex("woman.jpg");
+    }
+
+    private void LoadTex(string fileName)
+    {
+        GL.Enable(EnableCap.Texture2D);
+        GL.GenTextures(1, out texture);
+        GL.BindTexture(TextureTarget.Texture2D, texture);
+
+        Image<Rgba32> image = SixLabors.ImageSharp.Image.Load<Rgba32>(fileName);
+        image.Mutate(x => x.Flip(FlipMode.Vertical));
+        var pixels = new List<byte>(4 * image.Width * image.Height);
+
+        for (int y = 0; y < image.Height; y++)
+        {
+            var row = image.GetPixelRowSpan(y);
+
+            for (int x = 0; x < image.Width; x++)
+            {
+                pixels.Add(row[x].R);
+                pixels.Add(row[x].G);
+                pixels.Add(row[x].B);
+                pixels.Add(row[x].A);
+            }
+        }
+        GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, image.Width, image.Height,
+            0, PixelFormat.Rgba, PixelType.UnsignedByte, pixels.ToArray());
+        GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
     }
     protected override void OnUpdateFrame(FrameEventArgs args)
     {
@@ -45,27 +84,27 @@ class Window : GameWindow
 
     private void CheckKeys()
     {
-        if (KeyboardState.IsKeyDown(Keys.Up))
+        if (KeyboardState.IsKeyDown(Keys.W))
         {
             GL.Rotate(-1, 1, 0, 0);
         }
-        if (KeyboardState.IsKeyDown(Keys.Down))
+        if (KeyboardState.IsKeyDown(Keys.S))
         {
             GL.Rotate(1, 1, 0, 0);
         }
-        if (KeyboardState.IsKeyDown(Keys.Left))
+        if (KeyboardState.IsKeyDown(Keys.A))
         {
             GL.Rotate(-1, 0, 1, 0);
         }
-        if (KeyboardState.IsKeyDown(Keys.Right))
+        if (KeyboardState.IsKeyDown(Keys.D))
         {
             GL.Rotate(1, 0, 1, 0);
         }
-        if (KeyboardState.IsKeyDown(Keys.A))
+        if (KeyboardState.IsKeyDown(Keys.Q))
         {
             GL.Rotate(-1, 0, 0, 1);
         }
-        if (KeyboardState.IsKeyDown(Keys.D))
+        if (KeyboardState.IsKeyDown(Keys.E))
         {
             GL.Rotate(1, 0, 0, 1);
         }
@@ -73,15 +112,17 @@ class Window : GameWindow
 
     protected override void OnRenderFrame(FrameEventArgs args)
     {
-        GL.Clear(ClearBufferMask.ColorBufferBit);
+        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
         GL.Begin(PrimitiveType.Triangles);
-        foreach(var triangle in model)
+        foreach (var triangle in model)
         {
-            GL.Color4(triangle.Color);
-            GL.Vertex3(triangle.V1);
-            GL.Vertex3(triangle.V2);
-            GL.Vertex3(triangle.V3);
+            for (int i = 0; i < 3; i++)
+            {
+                GL.Normal3(triangle[i].VN);
+                GL.TexCoord3(triangle[i].VT);
+                GL.Vertex3(triangle[i].V);
+            }
         }
         GL.End();
         SwapBuffers();

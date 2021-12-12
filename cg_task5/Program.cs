@@ -7,6 +7,7 @@ NativeWindowSettings settings = new()
     Size = new OpenTK.Mathematics.Vector2i(800, 800),
     WindowBorder = WindowBorder.Fixed,
     Title = "CG Task 5",
+    NumberOfSamples = 4,
 
     APIVersion = new(3, 3),
     Flags = ContextFlags.Default,
