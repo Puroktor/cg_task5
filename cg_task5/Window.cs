@@ -76,10 +76,8 @@ class Window : GameWindow
         GL.Clear(ClearBufferMask.ColorBufferBit);
 
         GL.Begin(PrimitiveType.Triangles);
-        for (int i = model.Count-1; i>=0; i--)
+        foreach(var triangle in model)
         {
-            var triangle = model[i];
-
             GL.Color4(triangle.Color);
             GL.Vertex3(triangle.V1);
             GL.Vertex3(triangle.V2);
