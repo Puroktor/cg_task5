@@ -125,4 +125,10 @@ class Window : GameWindow
         SwapBuffers();
         base.OnRenderFrame(args);
     }
+
+    protected override void OnUnload()
+    {
+        GL.DeleteTexture(texture);
+        base.OnUnload();
+    }
 }
