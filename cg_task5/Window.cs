@@ -27,12 +27,9 @@ class Window : GameWindow
     {
         base.OnLoad();
         using Stream stream = File.OpenRead("woman.obj");
-        float scale;
-        (model, scale) = OBJ.Load(stream);
+        model = OBJ.Load(stream);
 
-        GL.Scale(scale, scale, scale);
-        GL.Translate(0, -1 / scale / 2, 0);
-        GL.ClearColor(Color4.LightBlue);
+        GL.ClearColor(Color4.Black);
 
         GL.Enable(EnableCap.DepthTest);
 
