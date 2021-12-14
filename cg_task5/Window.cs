@@ -26,14 +26,14 @@ class Window : GameWindow
     protected override void OnLoad()
     {
         base.OnLoad();
-        using Stream stream = File.OpenRead("model.obj");
+        using Stream stream = File.OpenRead("models/model.obj");
         model = OBJ.Load(stream);
 
         GL.ClearColor(Color4.Black);
 
         GL.Enable(EnableCap.DepthTest);
 
-        LoadTex("model.jpg");
+        LoadTex("models/model.jpg");
     }
 
     private void LoadTex(string fileName)
